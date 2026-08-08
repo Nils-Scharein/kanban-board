@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    stages {
+          stage('Build') {
+              steps {
+                dir('backend') {
+                  echo "Building the backend"
+                  sh './gradlew clean build -x test'
+                }
+              }
+          }
+        stage('testing') {
+            steps {
+                dir('backend') {
+                    echo 'running tests'
+                     sh './gradlew test'
+                 }
+            }
+        }
+         stage('lint') {
+            steps {
+                dir('backend') {
+                    echo 'check lint'
+                    sh './gradlew ktlintCheck'
+                 }
+            }
+        }
+         stage('deploy') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.currentResult == 'SUCCESS' }
+                }
+            }
+            steps {
+                echo 'deploying'
+                echo 'not implemented yet'
+            }
+        }
+    }
+}

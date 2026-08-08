@@ -1,0 +1,26 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    restart: unless-stopped
+    ports:
+      - "192.168.178.39:8081:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+  ssh-agent:
+    image: jenkins/ssh-agent
+
+  agent1:
+    image: jenkins/ssh-agent:jdk21
+    restart: unless-stopped
+    container_name: agent1
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIxtfn/iOfiHCCd267F8IiMhVVGoST4lgEb9CZiZIBPi
+
+  agent2:
+    image: jenkins/ssh-agent:jdk21
+    restart: unless-stopped
+    container_name: agent2
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIxtfn/iOfiHCCd267F8IiMhVVGoST4lgEb9CZiZIBPi
+volumes:
+  jenkins_home:
