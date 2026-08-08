@@ -2,15 +2,6 @@ pipeline {
     agent any
 
     stages {
-        echo "WORKSPACE: ${env.WORKSPACE}"
-        stage('Checkout') {
-              steps {
-                  // single git means clone + checkout main
-                  echo "I'm in `pwd`"
-                  git checkout scm
-                  git 'https://github.com/Nils-Scharein/kanban-board.git'
-              }
-          }
           stage('Build') {
               steps {
                 dir('backend') {
@@ -36,8 +27,12 @@ pipeline {
             }
         }
          stage('deploy') {
-            when { branch 'main' }
-            when { expression { currentBuild.currentResult == 'SUCCESS' } }
+            when {
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.currentResult == 'SUCCESS' }
+                }
+            }
             steps {
                 echo 'deploying'
                 echo 'not implemented yet'
