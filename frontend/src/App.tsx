@@ -3,9 +3,11 @@ import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
+import useHelloWorld from "./hooks/HelloWorld.tsx";
 
 function App() {
   const [count, setCount] = useState(0)
+  const {answer, error} = useHelloWorld();
 
   return (
     <>
@@ -28,6 +30,8 @@ function App() {
         >
           Count is {count}
         </button>
+        <h1>{answer}</h1>
+        {error && <h1>{error}</h1>}
       </section>
 
       <div className="ticks"></div>

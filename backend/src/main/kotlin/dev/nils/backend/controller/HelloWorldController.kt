@@ -1,5 +1,6 @@
 package dev.nils.backend.controller
 
+import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -7,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController
 class HelloWorldController {
 
     @GetMapping("/hello")
-    fun HelloWorld() : String {
+    fun helloWorld() : String {
         return "Hello World!"
     }
 }
