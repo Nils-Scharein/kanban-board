@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    stages {
+        echo "WORKSPACE: ${env.WORKSPACE}"
+        stage('Checkout') {
+              steps {
+                  // single git means clone + checkout main
+                  echo "I'm in `pwd`"
+                  git checkout scm
+                  git 'https://github.com/Nils-Scharein/kanban-board.git'
+              }
+          }
+          stage('Build') {
+              steps {
+                dir('backend') {
+                  echo "Building the backend"
+                  sh './gradlew clean build'
+                }
+              }
+          }
+        stage('testing') {
+            steps {
+                dir('backend') {
+                    echo 'running tests'
+                     sh './gradlew test'
+                 }
+            }
+        }
+         stage('lint') {
+            steps {
+                dir('backend') {
+                    echo 'check lint'
+                    sh './gradlew ktlintCheck'
+                 }
+            }
+        }
+         stage('deploy') {
+            when { branch 'main' }
+            when { expression { currentBuild.currentResult == 'SUCCESS' } }
+            steps {
+                echo 'deploying'
+                echo 'not implemented yet'
+            }
+        }
+    }
+}
