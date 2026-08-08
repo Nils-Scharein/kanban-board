@@ -1,8 +1,8 @@
 import {useEffect, useState} from "react";
 
 const useHelloWorld = () => {
-    const [answer, setAnswer] = useState("Nothing Yet");
-    const [error, setError] = useState();
+    const [answer, setAnswer] = useState<string>("Nothing Yet");
+    const [error, setError] = useState<string>();
 
     useEffect(() => {
 
@@ -18,7 +18,10 @@ const useHelloWorld = () => {
                 console.log(data);
                 setAnswer(data)
             } catch (error) {
-                console.error("Fehler:", error.message);
+                if (error instanceof Error) {
+                    setError(error.message.toString())
+                    console.error("Fehler:", error.message);
+                }
             }
         }
         fetchHello()
