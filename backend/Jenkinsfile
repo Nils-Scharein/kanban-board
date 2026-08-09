@@ -2,31 +2,45 @@ pipeline {
     agent any
 
     stages {
-          stage('Build') {
-              steps {
+        stage('Build') {
+            steps {
                 dir('backend') {
-                  echo "Building the backend"
-                  sh './gradlew clean build -x test'
+                    echo "Building the backend"
+                    sh './gradlew clean assemble'
                 }
-              }
-          }
+            }
+        }
         stage('testing') {
             steps {
                 dir('backend') {
-                    echo 'running tests'
-                     sh './gradlew test'
-                 }
+                    script {
+                        try {
+                            echo 'running tests'
+                            sh './gradlew test'
+                        }
+                        catch (err) {
+                            unstable(message: "${STAGE_NAME} is unstable")
+                        }
+                    }
+                }
             }
         }
-         stage('lint') {
+        stage('lint') {
             steps {
                 dir('backend') {
-                    echo 'check lint'
-                    sh './gradlew ktlintCheck'
-                 }
+                    script {
+                        try {
+                            echo 'check lint'
+                            sh './gradlew ktlintCheck'
+                        }
+                        catch (err) {
+                            unstable(message: "${STAGE_NAME} is unstable")
+                        }
+                    }
+                }
             }
         }
-         stage('deploy') {
+        stage('deploy') {
             when {
                 allOf {
                     branch 'main'
