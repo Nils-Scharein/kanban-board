@@ -1,41 +1,87 @@
 pipeline {
-    agent any
+    agent { label "gcloud" }
+
+    environment {
+        CLOUDSDK_CORE_PROJECT = "kanban-505512"
+        CLIENT_EMAIL = "jenkins-gcloud-520@kanban-505512.iam.gserviceaccount.com"
+        REGION = "europe-west10"
+        SERVICE = "kanban-board"
+        GCLOUD_CREDS = credentials('gcloud-creds')
+    }
 
     stages {
-          stage('Build') {
-              steps {
+        stage('Build') {
+            steps {
                 dir('backend') {
-                  echo "Building the backend"
-                  sh './gradlew clean build -x test'
+                    echo "Building the backend"
+                    sh './gradlew assemble'
                 }
-              }
-          }
+            }
+        }
         stage('testing') {
             steps {
                 dir('backend') {
                     echo 'running tests'
-                     sh './gradlew test'
-                 }
+                    sh './gradlew test'
+                }
             }
         }
-         stage('lint') {
+        stage('lint') {
             steps {
                 dir('backend') {
                     echo 'check lint'
                     sh './gradlew ktlintCheck'
-                 }
-            }
-        }
-         stage('deploy') {
-            when {
-                allOf {
-                    branch 'main'
-                    expression { currentBuild.currentResult == 'SUCCESS' }
                 }
             }
-            steps {
-                echo 'deploying'
-                echo 'not implemented yet'
+        }
+        stage('deploy') {
+//            when {
+//                allOf {
+//                    branch 'main'
+//                    expression { currentBuild.currentResult == 'SUCCESS' }
+//                }
+//            }
+            stages {
+                stage('Verify version') {
+                    steps {
+                        sh 'gcloud version'
+                    }
+                }
+                stage('Authenticate') {
+                    steps {
+                        sh '''
+                          set -eu
+                          gcloud auth activate-service-account --key-file="$GCLOUD_CREDS"
+                          gcloud auth list
+                            '''
+                    }
+                }
+                stage('Install service') {
+                    steps {
+                        dir('backend') {
+                            sh '''
+                                set -eu
+                                gcloud run services replace service.yaml --region=${REGION}
+                              '''
+                        }
+                    }
+                }
+                stage('Allow allUsers') {
+                    steps {
+                        sh '''
+                          set -eu
+                          gcloud run services add-iam-policy-binding ${SERVICE} \
+                            --region=${REGION} --member='allUsers' --role='roles/run.invoker'
+                        '''
+
+                    }
+                }
+            }
+            post {
+                always {
+                    sh 'gcloud auth revoke --all --quiet || true'
+                    deleteDir()
+                }
             }
         }
     }

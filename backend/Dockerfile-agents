@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+ARG TARGETARCH
+
+FROM jenkins/ssh-agent:jdk21 AS base-amd64
+ADD https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz /tmp/gcloud.tar.gz
+
+FROM jenkins/ssh-agent:jdk21 AS base-arm64
+ADD https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-arm.tar.gz /tmp/gcloud.tar.gz
+
+FROM base-${TARGETARCH} AS final
+ARG TARGETARCH
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CLOUDSDK_PYTHON=/usr/bin/python3
+
+RUN <<EOF
+set -e
+echo "baue für $TARGETARCH"
+tar -xzf /tmp/gcloud.tar.gz -C /opt
+/opt/google-cloud-sdk/install.sh --quiet --path-update=false
+ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
+rm /tmp/gcloud.tar.gz
+EOF
