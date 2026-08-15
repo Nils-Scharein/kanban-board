@@ -3,7 +3,7 @@ services:
     image: jenkins/jenkins:lts
     restart: unless-stopped
     ports:
-      - "8081:8080"
+      - "192.168.178.39:8081:8080"
     volumes:
       - jenkins_home:/var/jenkins_home
 
@@ -13,14 +13,13 @@ services:
       dockerfile: "./Dockerfile-agents"
       args:
         TARGETARCH: arm64
+        DOCKER_GID: "984"
     restart: unless-stopped
     container_name: agent1
     volumes:
-      # Der Agent nutzt den Docker-Daemon des Hosts statt eines eigenen
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:
-      # GID der docker-Gruppe auf dem Pi: getent group docker
-      - "999"
+      - "984"
     environment:
       - JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIxtfn/iOfiHCCd267F8IiMhVVGoST4lgEb9CZiZIBPi
 

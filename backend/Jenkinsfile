@@ -1,11 +1,18 @@
 pipeline {
     agent { label "gcloud" }
 
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
     environment {
         CLOUDSDK_CORE_PROJECT = "kanban-505512"
         CLIENT_EMAIL = "jenkins-gcloud-520@kanban-505512.iam.gserviceaccount.com"
         REGION = "europe-west10"
         SERVICE = "kanban-board"
+        REPO    = "kanban"
+        IMAGE="${REGION}-docker.pkg.dev/${CLOUDSDK_CORE_PROJECT}/${REPO}/${REPO}-image"
         GCLOUD_CREDS = credentials('gcloud-creds')
     }
 
@@ -52,17 +59,26 @@ pipeline {
                         sh '''
                           set -eu
                           gcloud auth activate-service-account --key-file="$GCLOUD_CREDS"
+                          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
                           gcloud auth list
                             '''
                     }
                 }
-                stage('Install service') {
+                stage('Build Docker Image and Push to Artifact Registry') {
+                    steps {
+                            dir('backend') {
+                            sh '''
+
+                              docker buildx create --name amd64 --driver docker-container --use --bootstrap || true
+                              docker buildx build --platform linux/amd64 --provenance=false --push -t ${IMAGE} .
+                                '''
+                        }
+                    }
+                }
+                stage('Install service from Artifactory') {
                     steps {
                         dir('backend') {
-                            sh '''
-                                set -eu
-                                gcloud run services replace service.yaml --region=${REGION}
-                              '''
+                            sh 'gcloud run services replace service.yaml --region=${REGION}'
                         }
                     }
                 }
@@ -70,8 +86,7 @@ pipeline {
                     steps {
                         sh '''
                           set -eu
-                          gcloud run services add-iam-policy-binding ${SERVICE} \
-                            --region=${REGION} --member='allUsers' --role='roles/run.invoker'
+                          gcloud run services add-iam-policy-binding ${SERVICE} --region=${REGION} --member='allUsers' --role='roles/run.invoker\'
                         '''
 
                     }
