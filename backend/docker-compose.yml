@@ -9,11 +9,18 @@ services:
 
   agent1:
     build:
+      context: .
       dockerfile: "./Dockerfile-agents"
       args:
         TARGETARCH: arm64
     restart: unless-stopped
     container_name: agent1
+    volumes:
+      # Der Agent nutzt den Docker-Daemon des Hosts statt eines eigenen
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      # GID der docker-Gruppe auf dem Pi: getent group docker
+      - "999"
     environment:
       - JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIxtfn/iOfiHCCd267F8IiMhVVGoST4lgEb9CZiZIBPi
 
