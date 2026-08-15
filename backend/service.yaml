@@ -1,0 +1,15 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: kanban-board
+spec:
+  template:
+    spec:
+      containers:
+        - image: europe-west10-docker.pkg.dev/kanban-505512/kanban/kanban-image:latest
+          ports:
+            - name: http1
+              containerPort: 8080
+          env:
+            - name: FRONTEND_URL
+              value: https://dein-projekt.pages.dev
