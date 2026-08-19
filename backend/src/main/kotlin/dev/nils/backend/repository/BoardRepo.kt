@@ -1,7 +1,6 @@
 package dev.nils.backend.repository
 
-import dev.nils.backend.entity.Board
+import dev.nils.backend.entity.BoardEntity
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface BoardRepo : JpaRepository<Board, Long>  {
-}
+interface BoardRepo : JpaRepository<BoardEntity, Long>

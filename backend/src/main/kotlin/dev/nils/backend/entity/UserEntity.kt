@@ -6,16 +6,21 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import javax.annotation.processing.Generated
 
 @Entity
-@Table(name="user")
-class User(email: String, name: String) {
-
+@Table(name = "AppUser")
+class UserEntity(
+    email: String,
+    hashedPassword: String,
+) {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="id", unique = true)
-    val id : Long? = null
+    @Column(name = "id", unique = true)
+    val id: Long? = null
 
-    
+    @Column(name = "email")
+    val email: String = email
+
+    @Column(name = "hashedPassword")
+    val hasedPassword: String = hashedPassword
 }

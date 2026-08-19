@@ -11,84 +11,92 @@ pipeline {
         CLIENT_EMAIL = "jenkins-gcloud-520@kanban-505512.iam.gserviceaccount.com"
         REGION = "europe-west10"
         SERVICE = "kanban-board"
-        REPO    = "kanban"
-        IMAGE="${REGION}-docker.pkg.dev/${CLOUDSDK_CORE_PROJECT}/${REPO}/${REPO}-image"
+        REPO = "kanban"
+        IMAGE = "${REGION}-docker.pkg.dev/${CLOUDSDK_CORE_PROJECT}/${REPO}/${REPO}-image"
         GCLOUD_CREDS = credentials('gcloud-creds')
     }
 
     stages {
-        stage('Build') {
-            steps {
-                dir('backend') {
-                    echo "Building the backend"
-                    sh './gradlew assemble'
-                }
-            }
-        }
-        stage('testing') {
-            steps {
-                dir('backend') {
-                    echo 'running tests'
-                    sh './gradlew test'
-                }
-            }
-        }
-        stage('lint') {
-            steps {
-                dir('backend') {
-                    echo 'check lint'
-                    sh './gradlew ktlintCheck'
-                }
-            }
-        }
-        stage('deploy') {
+        stage('Backend') {
             when {
-                allOf {
-                    branch 'main'
-                    expression { currentBuild.currentResult == 'SUCCESS' }
-                }
+                changeset "**/backend/*.*"
+                beforeAgent true
             }
             stages {
-                stage('Verify version') {
+                stage('Build') {
                     steps {
-                        sh 'gcloud version'
+                        dir('backend') {
+                            echo "Building the backend"
+                            sh './gradlew assemble'
+                        }
                     }
                 }
-                stage('Authenticate') {
+                stage('testing') {
                     steps {
-                        sh '''
+                        dir('backend') {
+                            echo 'running tests'
+                            sh './gradlew test'
+                        }
+                    }
+                }
+                stage('lint') {
+                    steps {
+                        dir('backend') {
+                            echo 'check lint'
+                            sh './gradlew ktlintCheck'
+                        }
+                    }
+                }
+                stage('deploy') {
+                    when {
+                        allOf {
+                            branch 'main'
+                            expression { currentBuild.currentResult == 'SUCCESS' }
+                        }
+                    }
+                    stages {
+                        stage('Verify version') {
+                            steps {
+                                sh 'gcloud version'
+                            }
+                        }
+                        stage('Authenticate') {
+                            steps {
+                                sh '''
                           set -eu
                           gcloud auth activate-service-account --key-file="$GCLOUD_CREDS"
                           gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
                           gcloud auth list
                             '''
-                    }
-                }
-                stage('Build Docker Image and Push to Artifact Registry') {
-                    steps {
-                            dir('backend') {
-                            sh '''
+                            }
+                        }
+                        stage('Build Docker Image and Push to Artifact Registry') {
+                            steps {
+                                dir('backend') {
+                                    sh '''
 
                               docker buildx create --name amd64 --driver docker-container --use --bootstrap || true
                               docker buildx build --platform linux/amd64 --provenance=false --push -t ${IMAGE} .
                                 '''
+                                }
+                            }
                         }
-                    }
-                }
-                stage('Install service from Artifactory') {
-                    steps {
-                        dir('backend') {
-                            sh 'gcloud run services replace service.yaml --region=${REGION}'
+                        stage('Install service from Artifactory') {
+                            steps {
+                                dir('backend') {
+                                    sh 'gcloud run services replace service.yaml --region=${REGION}'
+                                }
+                            }
                         }
-                    }
-                }
-                stage('Allow allUsers') {
-                    steps {
-                        sh '''
+                        stage('Allow allUsers') {
+                            steps {
+                                sh '''
                           set -eu
                           gcloud run services add-iam-policy-binding ${SERVICE} --region=${REGION} --member='allUsers' --role='roles/run.invoker\'
                         '''
 
+                            }
+                        }
                     }
                 }
             }

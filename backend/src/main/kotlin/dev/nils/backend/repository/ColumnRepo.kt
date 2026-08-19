@@ -1,4 +1,6 @@
 package dev.nils.backend.repository
 
-interface ColumnRepo {
-}
+import dev.nils.backend.entity.ColumnEntity
+import org.springframework.data.jpa.repository.JpaRepository
+
+interface ColumnRepo : JpaRepository<ColumnEntity, Long>
