@@ -34,10 +34,6 @@ class CardEntity(
     @Column(name = "completedAt", nullable = true)
     var completedAt: Instant? = null
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "column_id", nullable = false)
-    lateinit var column: ColumnEntity
-
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "assignee_id")
     var assignee: UserEntity? = null
@@ -45,6 +41,10 @@ class CardEntity(
     @Enumerated(EnumType.STRING)
     @Column(name = "priority")
     var priority: Priority = Priority.MEDIUM
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "column_id", nullable = false)
+    lateinit var column: ColumnEntity
 
     fun toCardDTO(): CardDTO = CardDTO(this.id!!, this.title)
 }

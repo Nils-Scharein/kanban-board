@@ -1,5 +1,6 @@
 package dev.nils.backend.entity
 
+import dev.nils.backend.dto.response.BoardDTO
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -23,8 +24,24 @@ open class BoardEntity(
     @Column(name = "name", nullable = false)
     var name: String = name
 
-    @Column(name = "columns", nullable = false)
     @OneToMany(mappedBy = "board", cascade = [CascadeType.ALL], orphanRemoval = true)
     @OrderBy("rank")
     var columns: MutableList<ColumnEntity> = mutableListOf()
+
+    fun addColumn(column: ColumnEntity) {
+        this.columns.add(column)
+        column.board = this
+    }
+
+    fun removeColumn(column: ColumnEntity) {
+        this.columns.remove(column)
+    }
+
+    fun toBoardDTO() : BoardDTO {
+        return BoardDTO(
+            id = this.id!!,
+            name = this.name,
+            columns = this.columns.map { it.toColumnDTO() }
+        )
+    }
 }
